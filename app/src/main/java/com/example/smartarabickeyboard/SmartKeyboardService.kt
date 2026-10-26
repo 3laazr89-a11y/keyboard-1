@@ -17,7 +17,7 @@ class SmartKeyboardService : InputMethodService() {
     private lateinit var keyboardRoot: LinearLayout
 
     private val gold = Color.rgb(232, 188, 119)
-    private val background = Color.rgb(25, 22, 20)
+    private val keyboardBackgroundColor = Color.rgb(25, 22, 20)
     private val keyBackground = Color.rgb(57, 43, 34)
 
     private val arabicRows = listOf(
