@@ -16,9 +16,9 @@ class SmartKeyboardService : InputMethodService() {
     private var isArabic = true
     private lateinit var keyboardRoot: LinearLayout
 
-    private val gold = Color.rgb(232, 188, 119)
+    private val goldColor = Color.rgb(232, 188, 119)
     private val keyboardBackgroundColor = Color.rgb(25, 22, 20)
-    private val keyBackground = Color.rgb(57, 43, 34)
+    private val keyBackgroundColor = Color.rgb(57, 43, 34)
 
     private val arabicRows = listOf(
         listOf("ض", "ص", "ث", "ق", "ف", "غ", "ع", "ه", "خ", "ح", "ج"),
@@ -35,18 +35,23 @@ class SmartKeyboardService : InputMethodService() {
     override fun onCreateInputView(): View {
         keyboardRoot = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(4, 6, 4, 6)
-            setBackgroundColor(background)
+            setPadding(dp(4), dp(6), dp(4), dp(6))
+            setBackgroundColor(keyboardBackgroundColor)
         }
 
         refreshKeyboard()
         return keyboardRoot
     }
 
+    private fun dp(value: Int): Int {
+        return (value * resources.displayMetrics.density).toInt()
+    }
+
     private fun keyboardHeight(): Int {
-        return getSharedPreferences("keyboard_settings", MODE_PRIVATE)
-            .getInt("keyboard_height", 300)
-            .coerceIn(240, 380)
+        return getSharedPreferences(
+            "keyboard_settings",
+            MODE_PRIVATE
+        ).getInt("keyboard_height", 300).coerceIn(240, 380)
     }
 
     private fun refreshKeyboard() {
@@ -57,12 +62,11 @@ class SmartKeyboardService : InputMethodService() {
         val totalHeight = keyboardHeight()
         val headerHeight = 38
         val controlsHeight = 50
-        val rowHeight = ((totalHeight - headerHeight - controlsHeight - 12) / 3)
-            .coerceIn(48, 100)
+        val rowHeight = (
+            (totalHeight - headerHeight - controlsHeight - 36) / 3
+        ).coerceIn(48, 100)
 
-        keyboardRoot.layoutParams = keyboardRoot.layoutParams?.apply {
-            height = dp(totalHeight)
-        } ?: LinearLayout.LayoutParams(
+        keyboardRoot.layoutParams = LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT,
             dp(totalHeight)
         )
@@ -76,9 +80,9 @@ class SmartKeyboardService : InputMethodService() {
             text = "SMART  •  ✦"
             textSize = 12f
             typeface = Typeface.DEFAULT_BOLD
-            setTextColor(gold)
+            setTextColor(goldColor)
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(8, 0, 8, 0)
+            setPadding(dp(8), 0, dp(8), 0)
         }
 
         header.addView(
@@ -87,16 +91,21 @@ class SmartKeyboardService : InputMethodService() {
         )
 
         header.addView(
-            createKey(if (isArabic) "العربية" else "EN") {
+            createKey(if (isArabic) "العربية" else "English") {
                 isArabic = !isArabic
                 refreshKeyboard()
             },
+            LinearLayout.LayoutParams(dp(88), dp(headerHeight))
+        )
+
+        keyboardRoot.addView(
+            header,
             LinearLayout.LayoutParams(
-                dp(76), dp(headerHeight)
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                dp(headerHeight)
             )
         )
 
-        keyboardRoot.addView(header)
         addCharacterRows(rowHeight)
         addControlRow(controlsHeight)
     }
@@ -113,16 +122,14 @@ class SmartKeyboardService : InputMethodService() {
             keys.forEach { key ->
                 row.addView(
                     createKey(key) {
-                        if (!isPasswordField()) {
-                            currentInputConnection?.commitText(key, 1)
-                        } else {
-                            currentInputConnection?.commitText(key, 1)
-                        }
+                        currentInputConnection?.commitText(key, 1)
                     },
                     LinearLayout.LayoutParams(
-                        0, dp(rowHeight), 1f
+                        0,
+                        dp(rowHeight),
+                        1f
                     ).apply {
-                        setMargins(dp(2), dp(3), dp(2), dp(3))
+                        setMargins(dp(2), dp(2), dp(2), dp(2))
                     }
                 )
             }
@@ -143,7 +150,11 @@ class SmartKeyboardService : InputMethodService() {
             gravity = Gravity.CENTER
         }
 
-        fun addControl(label: String, weight: Float, action: () -> Unit) {
+        fun addControl(
+            label: String,
+            weight: Float,
+            action: () -> Unit
+        ) {
             row.addView(
                 createKey(label, action),
                 LinearLayout.LayoutParams(0, dp(height), weight).apply {
@@ -161,7 +172,14 @@ class SmartKeyboardService : InputMethodService() {
             refreshKeyboard()
         }
 
-        addControl("مسافة", 2.6f) {
+        addControl("،", 0.8f) {
+            currentInputConnection?.commitText(
+                if (isArabic) "،" else ",",
+                1
+            )
+        }
+
+        addControl("مسافة", 2.4f) {
             currentInputConnection?.commitText(" ", 1)
         }
 
@@ -175,6 +193,7 @@ class SmartKeyboardService : InputMethodService() {
 
             if (connection != null && info != null) {
                 val action = info.imeOptions and EditorInfo.IME_MASK_ACTION
+
                 if (action != EditorInfo.IME_ACTION_NONE &&
                     action != EditorInfo.IME_ACTION_UNSPECIFIED
                 ) {
@@ -194,13 +213,23 @@ class SmartKeyboardService : InputMethodService() {
         )
     }
 
-    private fun createKey(label: String, action: () -> Unit): Button {
+    private fun createKey(
+        label: String,
+        action: () -> Unit
+    ): Button {
         return Button(this).apply {
             text = label
             isAllCaps = false
             textSize = if (label.length > 3) 12f else 18f
-            setTextColor(if (label == "↵" || label == "⌫") gold else Color.WHITE)
-            setBackgroundColor(keyBackground)
+            typeface = Typeface.DEFAULT
+            setTextColor(
+                if (label == "↵" || label == "⌫") {
+                    goldColor
+                } else {
+                    Color.WHITE
+                }
+            )
+            setBackgroundColor(keyBackgroundColor)
             setPadding(0, 0, 0, 0)
             stateListAnimator = null
             setOnClickListener { action() }
@@ -209,23 +238,32 @@ class SmartKeyboardService : InputMethodService() {
 
     private fun isPasswordField(): Boolean {
         val info = currentInputEditorInfo ?: return false
-        val inputClass = info.inputType and android.text.InputType.TYPE_MASK_CLASS
-        val variation = info.inputType and android.text.InputType.TYPE_MASK_VARIATION
+        val inputClass = info.inputType and
+            android.text.InputType.TYPE_MASK_CLASS
+        val variation = info.inputType and
+            android.text.InputType.TYPE_MASK_VARIATION
 
-        return inputClass == android.text.InputType.TYPE_CLASS_TEXT &&
-            variation in setOf(
-                android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD,
-                android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD,
-                android.text.InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD
-            )
+        return (
+            inputClass == android.text.InputType.TYPE_CLASS_TEXT &&
+                variation in setOf(
+                    android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD,
+                    android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD,
+                    android.text.InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD
+                )
+            ) || (
+                inputClass == android.text.InputType.TYPE_CLASS_NUMBER &&
+                    variation == android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD
+                )
     }
 
-    private fun dp(value: Int): Int {
-        return (value * resources.displayMetrics.density).toInt()
-    }
-
-    override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
+    override fun onStartInputView(
+        info: EditorInfo?,
+        restarting: Boolean
+    ) {
         super.onStartInputView(info, restarting)
-        if (::keyboardRoot.isInitialized) refreshKeyboard()
+
+        if (::keyboardRoot.isInitialized) {
+            refreshKeyboard()
+        }
     }
 }
