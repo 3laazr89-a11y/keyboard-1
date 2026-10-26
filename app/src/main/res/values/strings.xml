@@ -1,1 +1,10 @@
-7
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Smart Arabic Keyboard</string>
+    <string name="keyboard_name">لوحة المفاتيح الذكية</string>
+    <string name="arabic_language">العربية</string>
+    <string name="english_language">English</string>
+    <string name="enable_keyboard">تفعيل لوحة المفاتيح</string>
+    <string name="choose_keyboard">اختيار لوحة المفاتيح</string>
+    <string name="welcome_message">مرحباً بك في لوحة المفاتيح الذكية</string>
+</resources>
